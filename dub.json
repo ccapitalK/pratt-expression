@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"sahan"
+	],
+	"copyright": "Copyright © 2024, sahan",
+	"description": "Simple example of a pratt parser for expressions",
+	"license": "MIT",
+	"name": "pratt"
+}

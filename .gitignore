@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/pratt
+pratt.so
+pratt.dylib
+pratt.dll
+pratt.a
+pratt.lib
+pratt-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst
