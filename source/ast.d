@@ -1,4 +1,8 @@
 import std.conv;
+import std.sumtype;
+import std.traits : FieldNameTuple;
+
+import autohash;
 
 enum LexTag {
     plus = 0,
@@ -20,4 +24,74 @@ struct Lexeme {
     }
 
     string toString() const pure => "Lexeme(LexTag." ~ tag.to!string ~ ", \"" ~ span ~ "\")";
+}
+
+alias Expression = SumType!(BinOp, UnOp, IntLiteral);
+
+class BinOp {
+    Lexeme operator;
+    Expression left;
+    Expression right;
+
+    this() {
+    }
+
+    this(Lexeme operator, Expression left, Expression right) {
+        this.operator = operator;
+        this.left = left;
+        this.right = right;
+    }
+
+    override string toString() const pure => "BinOp(" ~ left.toString ~ ", " ~ operator
+        .toString ~ ", " ~ right.toString ~ ")";
+
+    mixin AutoHashEquals;
+}
+
+class UnOp {
+    Lexeme operator;
+    Expression exp;
+
+    this() {
+    }
+
+    this(Lexeme operator, Expression exp) {
+        this.operator = operator;
+        this.exp = exp;
+    }
+
+    override string toString() const pure => "UnOp(" ~ operator.toString ~ ", " ~ exp
+        .toString ~ ")";
+
+    mixin AutoHashEquals;
+}
+
+class IntLiteral {
+    Lexeme literal;
+
+    this() {
+    }
+
+    this(Lexeme literal) {
+        this.literal = literal;
+    }
+
+    override string toString() const pure => "IntLiteral(" ~ literal.span ~ ")";
+
+    mixin AutoHashEquals;
+}
+
+unittest {
+    auto str = "++";
+    auto l1 = Lexeme(LexTag.plus, str[0 .. 1]);
+    auto l2 = Lexeme(LexTag.plus, str[1 .. 2]);
+    assert(l1 == l2);
+    auto i1 = new IntLiteral(l1);
+    auto i2 = new IntLiteral(l2);
+    assert(i1 == i2);
+    assert(i1.toHash == i2.toHash);
+    Expression e1 = i1;
+    Expression e2 = i2;
+    assert(e1 == e2);
+
 }

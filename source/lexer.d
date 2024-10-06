@@ -63,3 +63,9 @@ Lexeme[] lex(string data) {
     Lexer lexer;
     return lexer.parse(data);
 }
+
+unittest {
+    assert(lex("1 + 1").length == 3);
+    assert(lex("  1 +1").length == 3);
+    assert(lex(" 21 1 +1").length == 4);
+}
