@@ -6,6 +6,10 @@ struct Parser {
     Lexeme[] lexemes;
     size_t pos = 0;
 
+    void unexpectedEnd() {
+        throw new Exception("Failed to parse unexpected end of input");
+    }
+
     void unexpectedToken() {
         throw new Exception("Failed to parse unexpected token: " ~ lexemes[pos].toString);
     }
@@ -44,7 +48,16 @@ struct Parser {
         switch (peek()) {
         case LexTag.minus:
             auto op = consume();
-            Expression inner = parseExpression(precedence);
+            if (pos >= lexemes.length) {
+                unexpectedEnd();
+            }
+            auto next = peek();
+            Expression inner;
+            if (next == LexTag.intLiteral) {
+                inner = parseIntLiteral();
+            } else if (next == LexTag.openParen) {
+                inner = parseExpression();
+            }
             e = new UnOp(op, inner);
             break;
         case LexTag.openParen:
@@ -57,7 +70,6 @@ struct Parser {
             break;
         default:
             unexpectedToken();
-            assert(0);
         }
         // Add infix expressions
         infix: while (pos < lexemes.length && precedence < peekPrecedence()) {
@@ -113,11 +125,7 @@ unittest {
     assert(printExpr(parse("(1)")) == "(1)");
     assert(printExpr(parse("-1")) == "(-(1))");
     assert(printExpr(parse("1 + -3")) == "((1) + (-(3)))");
-    // What we want
-    //assert(printExpr(parse("-1 + 3")) == "((-(1)) + (3))");
-
-    // What we get
-    assert(printExpr(parse("-1 + 3")) == "(-((1) + (3)))");
+    assert(printExpr(parse("-1 + 3")) == "((-(1)) + (3))");
 
     assert(printExpr(parse("1 + 3 * 5")) == "((1) + ((3) * (5)))");
     assert(printExpr(parse("(1 + 3) * 5")) == "(((1) + (3)) * (5))");
