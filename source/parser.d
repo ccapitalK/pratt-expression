@@ -1,5 +1,6 @@
 import std.exception;
 import ast;
+import lexer;
 
 struct Parser {
     Lexeme[] lexemes;
@@ -43,7 +44,7 @@ struct Parser {
         switch (peek()) {
         case LexTag.minus:
             auto op = consume();
-            Expression inner = parseExpression();
+            Expression inner = parseExpression(precedence);
             e = new UnOp(op, inner);
             break;
         case LexTag.openParen:
@@ -100,30 +101,27 @@ Expression parse(Lexeme[] lexemes) {
     return expr;
 }
 
+Expression parse(string source) {
+    auto lexemes = lex(source);
+    return parse(lexemes);
+}
+
 unittest {
-    import lexer;
     import std.stdio;
 
-    auto exp(T)(T v) => cast(Expression) v;
-    Expression il(Lexeme l) => exp(new IntLiteral(l));
-    auto uo(Lexeme l, Expression e) => exp(new UnOp(l, e));
-    auto bo(Lexeme l, Expression e1, Expression e2) => exp(new BinOp(l, e1, e2));
-
-    auto t1 = lex("1");
-    assert(il(t1[0]) == parse(t1));
-    auto t2 = lex("(1)");
-    assert(il(t2[1]) == parse(t2));
-    auto t3 = lex("-1");
-    assert(uo(t3[0], il(t3[1])) == parse(t3));
-    auto t4 = lex("-1 + 3");
-
-    // What we expect
-    // assert(bo(t4[2], uo(t4[0], il(t4[1])), il(t4[3])) == parse(t4));
+    assert(printExpr(parse("1")) == "(1)");
+    assert(printExpr(parse("(1)")) == "(1)");
+    assert(printExpr(parse("-1")) == "(-(1))");
+    assert(printExpr(parse("1 + -3")) == "((1) + (-(3)))");
+    // What we want
+    //assert(printExpr(parse("-1 + 3")) == "((-(1)) + (3))");
 
     // What we get
-    assert(uo(t4[0], bo(t4[2], il(t4[1]), il(t4[3]))) == parse(t4));
-    auto t5 = lex("1 + 3 * 5");
-    assert(bo(t5[1], il(t5[0]), bo(t5[3], il(t5[2]), il(t5[4]))) == parse(t5));
-    auto t6 = lex("1 * 3 + 5");
-    assert(bo(t6[3], bo(t6[1], il(t6[0]), il(t6[2])), il(t6[4])) == parse(t6));
+    assert(printExpr(parse("-1 + 3")) == "(-((1) + (3)))");
+
+    assert(printExpr(parse("1 + 3 * 5")) == "((1) + ((3) * (5)))");
+    assert(printExpr(parse("(1 + 3) * 5")) == "(((1) + (3)) * (5))");
+    assert(printExpr(parse("1 * 3 + 5")) == "(((1) * (3)) + (5))");
+    assert(printExpr(parse("1 - 3 - 5")) == "(((1) - (3)) - (5))");
+    assert(printExpr(parse("1 / 3 / 5")) == "(((1) / (3)) / (5))");
 }

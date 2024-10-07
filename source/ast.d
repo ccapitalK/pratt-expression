@@ -81,6 +81,37 @@ class IntLiteral {
     mixin AutoHashEquals;
 }
 
+string printExpr(Expression e) {
+    import std.array;
+    Appender!string data;
+    void visit(Expression e) {
+        e.match!(
+            (BinOp op) {
+                data.put("(");
+                visit(op.left);
+                data.put(" ");
+                data.put(op.operator.span);
+                data.put(" ");
+                visit(op.right);
+                data.put(")");
+            },
+            (UnOp op) {
+                data.put("(");
+                data.put(op.operator.span);
+                visit(op.exp);
+                data.put(")");
+            },
+            (IntLiteral il) {
+                data.put("(");
+                data.put(il.literal.span);
+                data.put(")");
+            },
+        );
+    }
+    visit(e);
+    return data.data();
+}
+
 unittest {
     auto str = "++";
     auto l1 = Lexeme(LexTag.plus, str[0 .. 1]);
