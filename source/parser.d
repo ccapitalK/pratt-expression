@@ -6,8 +6,10 @@ struct Parser {
     Lexeme[] lexemes;
     size_t pos = 0;
 
-    void unexpectedEnd() {
-        throw new Exception("Failed to parse unexpected end of input");
+    void checkContinues() {
+        if (pos >= lexemes.length) {
+            throw new Exception("Failed to parse unexpected end of input");
+        }
     }
 
     void unexpectedToken() {
@@ -15,18 +17,18 @@ struct Parser {
     }
 
     LexTag peek() {
-        enforce(pos < lexemes.length);
+        checkContinues();
         return lexemes[pos].tag;
     }
 
     Lexeme consume() {
-        enforce(pos < lexemes.length);
+        checkContinues();
         pos += 1;
         return lexemes[pos - 1];
     }
 
     Lexeme expect(LexTag tag) {
-        enforce(pos < lexemes.length);
+        checkContinues();
         auto lexeme = lexemes[pos];
         if (lexeme.tag != tag) {
             unexpectedToken();
@@ -42,15 +44,13 @@ struct Parser {
     }
 
     Expression parseExpression(int precedence = 0) {
-        enforce(pos < lexemes.length);
+        checkContinues();
         Expression e;
         // Parse prefix expressions
         switch (peek()) {
         case LexTag.minus:
             auto op = consume();
-            if (pos >= lexemes.length) {
-                unexpectedEnd();
-            }
+            checkContinues();
             auto next = peek();
             Expression inner;
             if (next == LexTag.intLiteral) {
@@ -91,7 +91,7 @@ struct Parser {
     }
 
     int peekPrecedence() {
-        enforce(pos < lexemes.length);
+        checkContinues();
         switch (peek()) {
         case LexTag.plus:
         case LexTag.minus:
